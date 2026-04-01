@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sincronización de Base de Datos DB -> Firestore</title>
+</head>
+<body>
+    <h3 style="font-family: Arial;">Progreso de sincronización. Por favor, abre F12 (Consola).</h3>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const fb = initializeApp({
+            apiKey: "AIzaSyDH0c7TSVuicj6Q-4sAwBRlEAW-I4ViKq4",
+            authDomain: "cinestarfire.firebaseapp.com",
+            projectId: "cinestarfire",
+            storageBucket: "cinestarfire.firebasestorage.app",
+            messagingSenderId: "1003868943684",
+            appId: "1:1003868943684:web:fda482ad61e4e3f45f1311",
+            measurementId: "G-YZ0WX1RYVW"
+        });
+        const store = getFirestore(fb);
+
+        function poblarPeliculas() {
+            fetch("http://localhost/cinestar/cinestar/peliculas")
+            .then(function(respuesta) { return respuesta.json(); })
+            .then(function(dataObj) {
+                if (dataObj && dataObj.data) {
+                    const promesas = dataObj.data.map(function(item) {
+                        return addDoc(collection(store, 'peliculas'), item);
+                    });
+                    Promise.all(promesas).then(function() {
+                        console.log("Se importaron todas las peliculas (" + dataObj.data.length + ")");
+                    });
+                }
+            })
+            .catch(function(e) { console.warn("Error en peliculas:", e); });
+        }
+
+        function poblarCines() {
+            fetch("http://localhost/cinestar/cinestar/cines")
+            .then(function(res) { return res.json(); })
+            .then(async function(cinesData) {
+                if(cinesData && cinesData.data) {
+                    for(let i = 0; i < cinesData.data.length; i++) {
+                        const modeloCine = cinesData.data[i];
+                        
+                        try {
+                            const callPeli = await fetch("http://localhost/cinestar/cinestar/cines/" + modeloCine.id + "/peliculas");
+                            const rp = await callPeli.json();
+                            modeloCine.peliculas = rp.data ? rp.data : [];
+                            
+                            const callTarifa = await fetch("http://localhost/cinestar/cinestar/cines/" + modeloCine.id + "/tarifas");
+                            const rt = await callTarifa.json();
+                            modeloCine.tarifas = rt.data ? rt.data : [];
+                            
+                            await addDoc(collection(store, 'cines'), modeloCine);
+                        } catch(er) { }
+                    }
+                    console.log("Cines guardados en la nube con exito absoluto.");
+                }
+            })
+            .catch(function(error) { console.warn("Error cines:", error); });
+        }
+
+        function arrancarSubida() {
+            console.log("Arrancando sincronizacion hacia cinestarfire...");
+            poblarPeliculas();
+            setTimeout(poblarCines, 1500); // Dar respiro al servidor Apache
+        }
+
+        window.onload = arrancarSubida;
+    </script>
+</body>
+</html>
