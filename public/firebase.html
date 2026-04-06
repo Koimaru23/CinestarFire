@@ -9,12 +9,11 @@
 
 <body>
     <script type="module">
-        //Instancia la aplicacion de tu proyecto firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
         //Trae los modulos necesarios para usar firestore
         import { getFirestore, addDoc, collection } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-        //Configuracion para conectar a tu propia base de datos de firebase
+        //Configuracion para conectar a la base fire
         const firebaseConfig = {
             apiKey: "AIzaSyDH0c7TSVuicj6Q-4sAwBRlEAW-I4ViKq4",
             authDomain: "cinestarfire.firebaseapp.com",
@@ -25,11 +24,7 @@
             measurementId: "G-YZ0WX1RYVW"
         };
 
-        // Guardamos la inicializacion de Firebase en la variable app
         const app = initializeApp(firebaseConfig);
-
-        //Obtenemos el servicio de firestore en la constante db
-        //Le pasamos la configuracion de la app que creamos arriba
         const db = getFirestore(app);
 
 
